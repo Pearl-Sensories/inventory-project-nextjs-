@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export default function AddNewProductPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
+  // Wrap `useSearchParams` inside a Suspense boundary
+  const searchParams = useSearchParams();
   const [editIndex, setEditIndex] = useState(null);
+
   const [productName, setProductName] = useState("");
   const [productDescription, setProductDescription] = useState("");
   const [productPrice, setProductPrice] = useState("");
@@ -69,92 +71,94 @@ export default function AddNewProductPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F9F9F6] px-4">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white rounded-xl shadow-md p-8 w-full max-w-md space-y-6"
-      >
-        <h1 className="text-2xl font-semibold text-[#6C4F3D] text-center mb-4">
-          {editIndex !== null ? "Edit Product" : "Add a New Product"}
-        </h1>
-
-        <div>
-          <label className="block text-[#6C4F3D] font-medium mb-1">
-            Product Name
-          </label>
-          <input
-            type="text"
-            value={productName}
-            onChange={(e) => setProductName(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-[#6C4F3D] font-medium mb-1">
-            Description
-          </label>
-          <textarea
-            value={productDescription}
-            onChange={(e) => setProductDescription(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-[#6C4F3D] font-medium mb-1">
-            Price
-          </label>
-          <input
-            type="text"
-            value={productPrice}
-            onChange={(e) => setProductPrice(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-[#6C4F3D] font-medium mb-1">
-            Upload Image
-          </label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            className="w-full"
-          />
-          {productImage && (
-            <img
-              src={productImage}
-              alt="Preview"
-              className="mt-2 w-32 h-32 object-cover rounded-md"
-            />
-          )}
-        </div>
-
-        <div>
-          <label className="block text-[#6C4F3D] font-medium mb-1">
-            Stock Availability
-          </label>
-          <input
-            type="text"
-            value={productStock}
-            onChange={(e) => setProductStock(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md"
-            required
-          />
-        </div>
-
-        <button
-          type="submit"
-          className="w-full p-3 bg-[#A97C50] text-white font-semibold rounded-md hover:bg-[#6C4F3D] transition"
+    <Suspense fallback={<div>Loading...</div>}>
+      <div className="min-h-screen flex items-center justify-center bg-[#F9F9F6] px-4">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white rounded-xl shadow-md p-8 w-full max-w-md space-y-6"
         >
-          {editIndex !== null ? "Update Product" : "Add Product"}
-        </button>
-      </form>
-    </div>
+          <h1 className="text-2xl font-semibold text-[#6C4F3D] text-center mb-4">
+            {editIndex !== null ? "Edit Product" : "Add a New Product"}
+          </h1>
+
+          <div>
+            <label className="block text-[#6C4F3D] font-medium mb-1">
+              Product Name
+            </label>
+            <input
+              type="text"
+              value={productName}
+              onChange={(e) => setProductName(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-[#6C4F3D] font-medium mb-1">
+              Description
+            </label>
+            <textarea
+              value={productDescription}
+              onChange={(e) => setProductDescription(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-[#6C4F3D] font-medium mb-1">
+              Price
+            </label>
+            <input
+              type="text"
+              value={productPrice}
+              onChange={(e) => setProductPrice(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-[#6C4F3D] font-medium mb-1">
+              Upload Image
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="w-full"
+            />
+            {productImage && (
+              <img
+                src={productImage}
+                alt="Preview"
+                className="mt-2 w-32 h-32 object-cover rounded-md"
+              />
+            )}
+          </div>
+
+          <div>
+            <label className="block text-[#6C4F3D] font-medium mb-1">
+              Stock Availability
+            </label>
+            <input
+              type="text"
+              value={productStock}
+              onChange={(e) => setProductStock(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full p-3 bg-[#A97C50] text-white font-semibold rounded-md hover:bg-[#6C4F3D] transition"
+          >
+            {editIndex !== null ? "Update Product" : "Add Product"}
+          </button>
+        </form>
+      </div>
+    </Suspense>
   );
 }
