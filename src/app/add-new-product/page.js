@@ -3,10 +3,10 @@
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function AddNewProductPage() {
+const AddNewProductPageContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const [editIndex, setEditIndex] = useState(null);
   const [isClient, setIsClient] = useState(false);
 
@@ -90,6 +90,7 @@ export default function AddNewProductPage() {
           {editIndex !== null ? "Edit Product" : "Add a New Product"}
         </h1>
 
+        {/* Product form fields */}
         <div>
           <label className="block text-[#6C4F3D] font-medium mb-1">
             Product Name
@@ -168,5 +169,13 @@ export default function AddNewProductPage() {
         </button>
       </form>
     </div>
+  );
+};
+
+export default function AddNewProductPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AddNewProductPageContent />
+    </Suspense>
   );
 }
