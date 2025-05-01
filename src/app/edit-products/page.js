@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IoClose } from "react-icons/io5";
 
-export default function EditProduct() {
+const EditProductContent = () => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -150,5 +150,13 @@ export default function EditProduct() {
         </button>
       </form>
     </div>
+  );
+};
+
+export default function EditProduct() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <EditProductContent />
+    </Suspense>
   );
 }
