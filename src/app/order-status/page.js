@@ -1,0 +1,97 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+const ordersData = [
+  { id: "ORD001", customer: "Kwame Nkrumah", product: "Walnut Bed", status: "Processing" },
+  { id: "ORD002", customer: "Ama Serwaa", product: "Slate Sofa", status: "In Transit" },
+  { id: "ORD003", customer: "Kojo Mensah", product: "Caramel Mattress", status: "Delivered" },
+];
+
+const statuses = ["Processing", "In Transit", "Delivered", "Cancelled"];
+
+export default function UpdateOrderStatusPage() {
+  const router = useRouter();
+  const [orders, setOrders] = useState(ordersData);
+  const [updatedStatus, setUpdatedStatus] = useState({});
+
+  const handleStatusChange = (index, newStatus) => {
+    setUpdatedStatus((prev) => ({ ...prev, [index]: newStatus }));
+  };
+
+  const handleSave = (index) => {
+    const updatedOrders = [...orders];
+    if (updatedStatus[index]) {
+      updatedOrders[index].status = updatedStatus[index];
+      setOrders(updatedOrders);
+      setUpdatedStatus((prev) => {
+        const copy = { ...prev };
+        delete copy[index];
+        return copy;
+      });
+      alert(`Status for Order ${orders[index].id} updated successfully!`);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F9F9F6] p-6">
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={() => router.push("/warehouse-manager")}
+          className="bg-gray-400 hover:bg-gray-600 text-white px-4 py-2 rounded"
+        >
+          Close
+        </button>
+      </div>
+
+      <h1 className="text-2xl font-semibold text-[#6C4F3D] mb-6">Update Order Status</h1>
+
+      <div className="overflow-x-auto bg-white shadow rounded-xl">
+        <table className="w-full table-auto">
+          <thead className="bg-[#A97C50] text-white text-left">
+            <tr>
+              <th className="p-4">Order ID</th>
+              <th className="p-4">Customer</th>
+              <th className="p-4">Product</th>
+              <th className="p-4">Current Status</th>
+              <th className="p-4">Update Status</th>
+              <th className="p-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="text-[#3E4E50]">
+            {orders.map((order, index) => (
+              <tr key={order.id} className="border-b">
+                <td className="p-4">{order.id}</td>
+                <td className="p-4">{order.customer}</td>
+                <td className="p-4">{order.product}</td>
+                <td className="p-4 font-semibold">{order.status}</td>
+                <td className="p-4">
+                  <select
+                    value={updatedStatus[index] || order.status}
+                    onChange={(e) => handleStatusChange(index, e.target.value)}
+                    className="border border-gray-300 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-[#A97C50]"
+                  >
+                    {statuses.map((status, i) => (
+                      <option key={i} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+                <td className="p-4">
+                  <button
+                    onClick={() => handleSave(index)}
+                    className="bg-[#6C4F3D] text-white px-4 py-2 rounded hover:bg-[#A97C50] transition"
+                  >
+                    Save
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
