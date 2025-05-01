@@ -6,8 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 export default function AddNewProductPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const editIndex = searchParams.get("edit");
 
+  const [editIndex, setEditIndex] = useState(null);
   const [productName, setProductName] = useState("");
   const [productDescription, setProductDescription] = useState("");
   const [productPrice, setProductPrice] = useState("");
@@ -15,16 +15,21 @@ export default function AddNewProductPage() {
   const [productStock, setProductStock] = useState("");
 
   useEffect(() => {
-    const products = JSON.parse(localStorage.getItem("products")) || [];
-    if (editIndex !== null && products[editIndex]) {
-      const product = products[editIndex];
-      setProductName(product.name);
-      setProductDescription(product.description);
-      setProductPrice(product.price?.replace("$", ""));
-      setProductImage(product.image);
-      setProductStock(product.stock);
+    const index = searchParams.get("edit");
+    if (index !== null) {
+      setEditIndex(index);
+
+      const products = JSON.parse(localStorage.getItem("products")) || [];
+      const product = products[index];
+      if (product) {
+        setProductName(product.name);
+        setProductDescription(product.description);
+        setProductPrice(product.price?.replace("$", ""));
+        setProductImage(product.image);
+        setProductStock(product.stock);
+      }
     }
-  }, [editIndex]);
+  }, [searchParams]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -52,10 +57,8 @@ export default function AddNewProductPage() {
     const existingProducts = JSON.parse(localStorage.getItem("products")) || [];
 
     if (editIndex !== null && existingProducts[editIndex]) {
-      // Edit mode: update the product
       existingProducts[editIndex] = newProduct;
     } else {
-      // Add mode: append the product
       existingProducts.push(newProduct);
     }
 
