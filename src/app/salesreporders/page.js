@@ -1,169 +1,201 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { AiOutlinePlus, AiOutlineClose, AiFillEdit, AiFillDelete } from "react-icons/ai";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { AiOutlineClose } from "react-icons/ai";
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
-  const [newOrder, setNewOrder] = useState({
+  const [formData, setFormData] = useState({
     clientName: "",
     product: "",
-    quantity: "",
+    quantity: 1,
+    price: "",
     address: "",
   });
 
-  const [editingOrderId, setEditingOrderId] = useState(null);
-
-  // Load orders from localStorage on mount
   useEffect(() => {
     const storedOrders = JSON.parse(localStorage.getItem("orders")) || [];
     setOrders(storedOrders);
   }, []);
 
-  // Save orders to localStorage when changed
-  useEffect(() => {
-    localStorage.setItem("orders", JSON.stringify(orders));
-  }, [orders]);
-
-  const handleChange = (e) => {
-    setNewOrder({ ...newOrder, [e.target.name]: e.target.value });
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    // Check if the input field is for quantity or price, then ensure the value is a valid number.
+    if (name === "quantity" || name === "price") {
+      const numericValue = value === "" ? "" : parseFloat(value); // Allow empty string for clearing
+      setFormData((prev) => ({
+        ...prev,
+        [name]: isNaN(numericValue) ? "" : numericValue, // Only set valid numbers, else leave as empty string
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
-  const handleAddOrUpdateOrder = () => {
-    if (!newOrder.clientName || !newOrder.product || !newOrder.quantity || !newOrder.address) return;
+  const handleAddOrder = (e) => {
+    e.preventDefault();
 
-    if (editingOrderId !== null) {
-      const updatedOrders = orders.map((order) =>
-        order.id === editingOrderId ? { ...order, ...newOrder } : order
-      );
-      setOrders(updatedOrders);
-      setEditingOrderId(null);
-    } else {
-      const newOrderWithId = { ...newOrder, id: Date.now() };
-      setOrders([...orders, newOrderWithId]);
+    const { price, quantity, product, clientName, address } = formData;
 
-      // Save customer to localStorage
-      const storedCustomers = JSON.parse(localStorage.getItem("customers")) || [];
-      const customerExists = storedCustomers.some(c => c.name === newOrder.clientName);
-      if (!customerExists) {
-        const newCustomer = {
-          id: `CUST${Date.now().toString().slice(-5)}`,
-          name: newOrder.clientName,
-        };
-        localStorage.setItem("customers", JSON.stringify([...storedCustomers, newCustomer]));
-      }
+    if (!price || !quantity || !clientName || !product || !address) {
+      // Optional: You can add validation to handle incomplete forms.
+      console.log("All fields must be filled");
+      return;
     }
 
-    setNewOrder({ clientName: "", product: "", quantity: "", address: "" });
-  };
+    const newOrder = {
+      id: Date.now(),
+      customer: {
+        id: clientName.toLowerCase().replace(/\s+/g, "-") + "-" + Date.now(),
+        fullName: clientName,
+        address: address,
+      },
+      items: [
+        {
+          name: product,
+          quantity: quantity,
+          price: price,
+        },
+      ],
+      total: quantity * price,
+      date: new Date().toLocaleString(),
+      status: "Pending",
+    };
 
-  const handleEdit = (order) => {
-    setNewOrder({
-      clientName: order.clientName,
-      product: order.product,
-      quantity: order.quantity,
-      address: order.address,
-    });
-    setEditingOrderId(order.id);
-  };
-
-  const handleDelete = (id) => {
-    const updatedOrders = orders.filter((order) => order.id !== id);
+    // Save order
+    const updatedOrders = [...orders, newOrder];
     setOrders(updatedOrders);
+    localStorage.setItem("orders", JSON.stringify(updatedOrders));
+
+    // Save customer (if new)
+    const storedCustomers = JSON.parse(localStorage.getItem("customers")) || [];
+    const customerExists = storedCustomers.some(
+      (c) =>
+        c.name === newOrder.customer.fullName &&
+        c.address === newOrder.customer.address
+    );
+
+    if (!customerExists) {
+      const newCustomer = {
+        id: newOrder.customer.id,
+        name: newOrder.customer.fullName,
+        address: newOrder.customer.address,
+      };
+      const updatedCustomers = [...storedCustomers, newCustomer];
+      localStorage.setItem("customers", JSON.stringify(updatedCustomers));
+    }
+
+    // Reset form
+    setFormData({
+      clientName: "",
+      product: "",
+      quantity: 1,
+      price: "",
+      address: "",
+    });
   };
 
   return (
-    <div className="min-h-screen bg-[#F9F9F6] p-6 text-[#3E4E50] relative">
-      {/* Close icon */}
+    <div className="p-6 max-w-3xl mx-auto">
       <Link href="/salesrep">
-        <button className="absolute top-6 right-6 text-2xl text-gray-600 hover:text-gray-800">
+        <button className="absolute top-6 right-6 text-2xl text-gray-600 hover:text-gray-800 mt-20">
           <AiOutlineClose />
         </button>
       </Link>
 
-      <h1 className="text-3xl font-semibold mb-6">Orders</h1>
+      <h2 className="text-2xl font-semibold mb-4">Orders</h2>
 
-      {/* Create Order Form */}
-      <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-        <h2 className="text-xl font-semibold mb-4">
-          {editingOrderId ? "Edit Order" : "Create New Order"}
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input
-            type="text"
-            name="clientName"
-            value={newOrder.clientName}
-            onChange={handleChange}
-            placeholder="Client Name"
-            className="border rounded px-3 py-2 w-full"
-          />
-          <input
-            type="text"
-            name="product"
-            value={newOrder.product}
-            onChange={handleChange}
-            placeholder="Product"
-            className="border rounded px-3 py-2 w-full"
-          />
-          <input
-            type="number"
-            name="quantity"
-            value={newOrder.quantity}
-            onChange={handleChange}
-            placeholder="Quantity"
-            className="border rounded px-3 py-2 w-full"
-          />
-          <input
-            type="text"
-            name="address"
-            value={newOrder.address}
-            onChange={handleChange}
-            placeholder="Shipping Address"
-            className="border rounded px-3 py-2 w-full"
-          />
-        </div>
+      <form
+        onSubmit={handleAddOrder}
+        className="space-y-4 mb-6 bg-white p-4 rounded shadow"
+      >
+        <input
+          type="text"
+          name="clientName"
+          placeholder="Client Name"
+          value={formData.clientName}
+          onChange={handleInputChange}
+          required
+          className="w-full border px-3 py-2 rounded"
+        />
+        <input
+          type="text"
+          name="product"
+          placeholder="Product Name"
+          value={formData.product}
+          onChange={handleInputChange}
+          required
+          className="w-full border px-3 py-2 rounded"
+        />
+        <input
+          type="number"
+          name="quantity"
+          placeholder="Quantity"
+          value={formData.quantity || ""} // Ensures an empty string if no value is entered
+          onChange={handleInputChange}
+          required
+          className="w-full border px-3 py-2 rounded"
+        />
+        <input
+          type="number"
+          name="price"
+          placeholder="Price"
+          value={formData.price || ""} // Ensures an empty string if no value is entered
+          onChange={handleInputChange}
+          required
+          className="w-full border px-3 py-2 rounded"
+        />
+        <input
+          type="text"
+          name="address"
+          placeholder="Shipping Address"
+          value={formData.address}
+          onChange={handleInputChange}
+          required
+          className="w-full border px-3 py-2 rounded"
+        />
         <button
-          onClick={handleAddOrUpdateOrder}
-          className="mt-4 flex items-center space-x-2 bg-[#A97C50] text-white px-4 py-2 rounded hover:bg-[#91653f]"
+          type="submit"
+          className="bg-[#A97C50] text-white px-4 py-2 rounded hover:bg-[#8c6239]"
         >
-          <AiOutlinePlus /> <span>{editingOrderId ? "Update Order" : "Create Order"}</span>
+          Add Order
         </button>
-      </div>
+      </form>
 
-      {/* Existing Orders */}
-      <div className="bg-white p-4 rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold mb-4">Existing Orders</h2>
-        {orders.length === 0 ? (
-          <p>No orders yet.</p>
-        ) : (
-          <ul className="space-y-3">
-            {orders.map((order) => (
-              <li
-                key={order.id}
-                className="p-3 border rounded shadow-sm hover:bg-gray-50 flex justify-between items-start"
-              >
-                <div>
-                  <p><strong>Client:</strong> {order.clientName}</p>
-                  <p><strong>Product:</strong> {order.product}</p>
-                  <p><strong>Quantity:</strong> {order.quantity}</p>
-                  <p><strong>Address:</strong> {order.address}</p>
-                </div>
-                <div className="flex gap-3">
-                 
-                  <button
-                    onClick={() => handleDelete(order.id)}
-                    className="text-red-600 hover:text-red-800"
-                    title="Delete"
-                  >
-                    <AiFillDelete size={20} />
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      {orders.length === 0 ? (
+        <p className="text-gray-500">No orders yet.</p>
+      ) : (
+        <div className="space-y-4">
+          {orders.map((order) => (
+            <div key={order.id} className="p-4 border rounded bg-white">
+              <p className="text-sm text-gray-500">Order Date: {order.date}</p>
+              <p className="font-medium">Client: {order.customer?.fullName}</p>
+              <ul className="text-sm list-disc ml-5 mt-1">
+                <li>Product: {order.items?.[0]?.name}</li>
+                <li>Quantity: {order.items?.[0]?.quantity}</li>
+                <li>
+                  Price: $
+                  {typeof order.items?.[0]?.price === "number"
+                    ? order.items[0].price.toFixed(2)
+                    : "N/A"}
+                </li>
+
+                <li>Shipping Address: {order.customer?.address}</li>
+              </ul>
+              <p className="font-semibold mt-2">
+                Total: $
+                {typeof order.total === "number"
+                  ? order.total.toFixed(2)
+                  : "N/A"}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

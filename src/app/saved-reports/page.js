@@ -1,27 +1,48 @@
 "use client";
 import { useEffect, useState } from 'react';
-import { FaTimes } from 'react-icons/fa'; // Importing the close icon
-import { useRouter } from 'next/navigation'; // Importing the router for navigation
+import { FaTimes } from 'react-icons/fa';
+import { useRouter } from 'next/navigation';
 
 export default function SavedFilesPage() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter(); // Initialize the router
+  const router = useRouter();
 
   useEffect(() => {
-    const fetchReports = async () => {
+    const loadReports = async () => {
       try {
         const res = await fetch('/api/reports');
+        if (!res.ok) throw new Error("Failed to fetch reports");
+
         const data = await res.json();
-        setReports(data);
+        if (Array.isArray(data)) {
+          setReports(data);
+          localStorage.setItem('savedReports', JSON.stringify(data)); // Optional: offline cache
+        } else {
+          console.error('API returned invalid data:', data);
+          setReports([]);
+        }
       } catch (error) {
-        console.error('Failed to fetch reports:', error);
+        console.error('Failed to fetch reports from API:', error);
+
+        // Fallback to localStorage
+        const localReports = localStorage.getItem('savedReports');
+        if (localReports) {
+          try {
+            const parsed = JSON.parse(localReports);
+            if (Array.isArray(parsed)) {
+              setReports(parsed);
+            }
+          } catch (e) {
+            console.error("Failed to parse local reports from localStorage");
+          }
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchReports();
+    loadReports();
   }, []);
 
   const handleExport = (report) => {
@@ -31,15 +52,15 @@ export default function SavedFilesPage() {
     link.download = `report-${report.id}.txt`;
     link.href = url;
     link.click();
+    window.URL.revokeObjectURL(url);
   };
 
   const handleClose = () => {
-    router.push('/inventoryadmin'); // Navigate to /inventoryadmin when clicked
+    router.push('/inventoryadmin');
   };
 
   return (
     <div className="p-6 max-w-4xl mx-auto relative">
-      {/* Close icon */}
       <FaTimes
         onClick={handleClose}
         className="absolute top-4 right-4 text-gray-500 cursor-pointer hover:text-gray-700"

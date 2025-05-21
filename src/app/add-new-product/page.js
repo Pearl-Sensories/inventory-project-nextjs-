@@ -13,15 +13,15 @@ const AddNewProductPageContent = () => {
   const [productName, setProductName] = useState("");
   const [productDescription, setProductDescription] = useState("");
   const [productPrice, setProductPrice] = useState("");
-  const [productImage, setProductImage] = useState(null);
+  const [productImage, setProductImage] = useState(null); // base64
   const [productStock, setProductStock] = useState("");
 
   useEffect(() => {
-    setIsClient(true); // Ensure the page runs only on the client side
+    setIsClient(true);
   }, []);
 
   useEffect(() => {
-    if (!isClient) return; // Prevent useSearchParams from running during SSR
+    if (!isClient) return;
 
     const index = searchParams.get("edit");
     if (index !== null) {
@@ -42,11 +42,15 @@ const AddNewProductPageContent = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setProductImage(URL.createObjectURL(file));
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProductImage(reader.result); // base64 image string
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!productName || !productDescription || !productPrice || !productStock) {
@@ -63,21 +67,34 @@ const AddNewProductPageContent = () => {
     };
 
     const existingProducts = JSON.parse(localStorage.getItem("products")) || [];
-
     if (editIndex !== null && existingProducts[editIndex]) {
       existingProducts[editIndex] = newProduct;
     } else {
       existingProducts.push(newProduct);
     }
-
     localStorage.setItem("products", JSON.stringify(existingProducts));
 
-    alert(`Product ${editIndex !== null ? "updated" : "added"} successfully!`);
-    router.push("/add/editproducts");
+    try {
+      const res = await fetch("/api/products", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newProduct),
+      });
+
+      if (!res.ok) throw new Error("API post failed");
+
+      alert(`Product ${editIndex !== null ? "updated" : "added"} successfully!`);
+      router.push("/add/editproducts");
+    } catch (error) {
+      console.error("API post failed:", error);
+      alert("Error: Could not save product to the server.");
+    }
   };
 
   if (!isClient) {
-    return <div>Loading...</div>; // Render this fallback during SSR
+    return <div>Loading...</div>;
   }
 
   return (
@@ -90,11 +107,8 @@ const AddNewProductPageContent = () => {
           {editIndex !== null ? "Edit Product" : "Add a New Product"}
         </h1>
 
-        {/* Product form fields */}
         <div>
-          <label className="block text-[#6C4F3D] font-medium mb-1">
-            Product Name
-          </label>
+          <label className="block text-[#6C4F3D] font-medium mb-1">Product Name</label>
           <input
             type="text"
             value={productName}
@@ -105,9 +119,7 @@ const AddNewProductPageContent = () => {
         </div>
 
         <div>
-          <label className="block text-[#6C4F3D] font-medium mb-1">
-            Description
-          </label>
+          <label className="block text-[#6C4F3D] font-medium mb-1">Description</label>
           <textarea
             value={productDescription}
             onChange={(e) => setProductDescription(e.target.value)}
@@ -117,9 +129,7 @@ const AddNewProductPageContent = () => {
         </div>
 
         <div>
-          <label className="block text-[#6C4F3D] font-medium mb-1">
-            Price
-          </label>
+          <label className="block text-[#6C4F3D] font-medium mb-1">Price</label>
           <input
             type="text"
             value={productPrice}
@@ -130,9 +140,7 @@ const AddNewProductPageContent = () => {
         </div>
 
         <div>
-          <label className="block text-[#6C4F3D] font-medium mb-1">
-            Upload Image
-          </label>
+          <label className="block text-[#6C4F3D] font-medium mb-1">Upload Image</label>
           <input
             type="file"
             accept="image/*"
@@ -149,9 +157,7 @@ const AddNewProductPageContent = () => {
         </div>
 
         <div>
-          <label className="block text-[#6C4F3D] font-medium mb-1">
-            Stock Availability
-          </label>
+          <label className="block text-[#6C4F3D] font-medium mb-1">Stock Availability</label>
           <input
             type="text"
             value={productStock}

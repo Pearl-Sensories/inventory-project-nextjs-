@@ -1,10 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { MdClose } from "react-icons/md"; // Import MdClose from react-icons
+import { MdClose } from "react-icons/md";
 
-const products = [
+const staticProducts = [
   {
     id: 1,
     name: "Walnut Queen Bed",
@@ -32,6 +33,25 @@ const products = [
 ];
 
 export default function ProductAvailability() {
+  const [products, setProducts] = useState(staticProducts);
+
+  useEffect(() => {
+    const localProducts = JSON.parse(localStorage.getItem("products")) || [];
+    const formattedLocalProducts = localProducts.map((p, index) => ({
+      id: staticProducts.length + index + 1, // avoid id conflicts
+      name: p.name,
+      image: p.image || "/placeholder.png",
+      status:
+        p.stock?.toLowerCase().includes("out")
+          ? "Out of Stock"
+          : p.stock?.toLowerCase().includes("low")
+          ? "Low Stock"
+          : "In Stock",
+    }));
+
+    setProducts([...staticProducts, ...formattedLocalProducts]);
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#F9F9F6] p-6 text-[#3E4E50] relative">
       <Link
@@ -62,8 +82,7 @@ export default function ProductAvailability() {
             </div>
             <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
             <p
-              className={`text-sm font-medium px-2 py-1 rounded inline-block
-              ${
+              className={`text-sm font-medium px-2 py-1 rounded inline-block ${
                 product.status === "In Stock"
                   ? "bg-green-100 text-green-700"
                   : product.status === "Out of Stock"

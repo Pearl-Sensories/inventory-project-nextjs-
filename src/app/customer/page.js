@@ -42,9 +42,15 @@ export default function CustomersPage() {
         <table className="min-w-full">
           <thead className="bg-[#A97C50] text-white">
             <tr>
-              <th className="text-left px-6 py-3 text-sm font-semibold">Customer ID</th>
-              <th className="text-left px-6 py-3 text-sm font-semibold">Name</th>
-              <th className="text-left px-6 py-3 text-sm font-semibold">Actions</th>
+              <th className="text-left px-6 py-3 text-sm font-semibold">
+                Customer ID
+              </th>
+              <th className="text-left px-6 py-3 text-sm font-semibold">
+                Name
+              </th>
+              <th className="text-left px-6 py-3 text-sm font-semibold">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -53,7 +59,7 @@ export default function CustomersPage() {
                 <td className="px-6 py-4">{customer.id}</td>
                 <td className="px-6 py-4">{customer.name}</td>
                 <td className="px-6 py-4">
-                  <Link href="/order-history">
+                  <Link href={`/order-history?customerId=${customer.id}`}>
                     <button className="bg-[#6C4F3D] text-white px-4 py-2 rounded hover:bg-[#A97C50]">
                       View Order History
                     </button>

@@ -17,7 +17,6 @@ export default function CheckoutPage() {
   const [showCheckoutForm, setShowCheckoutForm] = useState(true);
 
   useEffect(() => {
-    // Load cart from localStorage on component mount
     const storedCart = JSON.parse(localStorage.getItem("cart")) || [];
     setCart(storedCart);
   }, []);
@@ -32,34 +31,29 @@ export default function CheckoutPage() {
   const handleFormSubmit = (e) => {
     e.preventDefault();
 
-    // Debugging: Check the structure of the cart
-    console.log("Cart items:", cart);
-
-    // Create an order object
     const newOrder = {
-      id: Date.now(), // Unique ID for the order
-      items: cart, // Include cart items
-      customer: formData, // Include customer details
+      id: Date.now(),
+      items: cart,
+      customer: formData,
       total: cart.reduce(
         (acc, item) => acc + (parseFloat(item.price) || 0) * (parseInt(item.quantity) || 1),
         0
-      ), // Calculate total price
-      date: new Date().toLocaleString(), // Add a timestamp
+      ),
+      date: new Date().toLocaleString(),
+      source: "checkout",
     };
 
-    // Save the order to localStorage
+    // Append order to existing orders in localStorage
     const existingOrders = JSON.parse(localStorage.getItem("orders")) || [];
     const updatedOrders = [...existingOrders, newOrder];
     localStorage.setItem("orders", JSON.stringify(updatedOrders));
 
-    // Clear the cart
+    // Clear cart
     setCart([]);
     localStorage.removeItem("cart");
 
-    // Optionally, display a success message
+    // Success
     alert("Checkout successful! Your order has been placed.");
-
-    // Reset the form
     setFormData({
       fullName: "",
       email: "",
@@ -71,6 +65,17 @@ export default function CheckoutPage() {
     });
     setShowCheckoutForm(false);
   };
+
+  if (!showCheckoutForm) {
+    return (
+      <section className="min-h-screen flex items-center justify-center bg-[#F9F9F6] text-[#6C4F3D]">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold mb-4">Thank you for your order!</h2>
+          <p>We’ve received your details and will begin processing your order shortly.</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="bg-[#F9F9F6] min-h-screen px-6 py-12">

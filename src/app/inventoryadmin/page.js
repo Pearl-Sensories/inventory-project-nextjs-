@@ -1,6 +1,8 @@
 import Link from "next/link";
 import React from "react";
-import { FiBox, FiList, FiBell, FiPlusCircle, FiEdit, FiFileText } from "react-icons/fi";
+import { FiBox, FiList, FiBell, FiPlusCircle, FiFileText } from "react-icons/fi";
+import { MdAlignHorizontalLeft } from "react-icons/md";
+import { IoLogOutOutline } from "react-icons/io5";
 
 export default function InventoryAdminDashboard() {
   return (
@@ -29,8 +31,12 @@ export default function InventoryAdminDashboard() {
             <FiBell /> <span>View All Orders</span>
           </a>
 
+          <a href="/view-all-products" className="flex items-center space-x-2 hover:text-[#A97C50]">
+          <MdAlignHorizontalLeft /> <span>View All Products</span>
+          </a>
+
           <a href="/logout" className="flex items-center space-x-2 hover:text-[#A97C50]">
-            <FiBell /> <span>Logout</span>
+          <IoLogOutOutline /> <span>Logout</span>
           </a>
         </nav>
       </aside>

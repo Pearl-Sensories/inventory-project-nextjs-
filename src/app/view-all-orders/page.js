@@ -1,25 +1,24 @@
 "use client";
+
 import { useEffect, useState } from "react";
-import { FaTimes } from "react-icons/fa"; // Import close icon
-import { useRouter } from "next/navigation"; // Import useRouter for navigation
+import { FaTimes } from "react-icons/fa";
+import { useRouter } from "next/navigation";
 
 export default function ViewAllOrders() {
   const [orders, setOrders] = useState([]);
-  const router = useRouter(); // Initialize the router
+  const router = useRouter();
 
-  // Load orders from localStorage on component mount
   useEffect(() => {
     const storedOrders = JSON.parse(localStorage.getItem("orders")) || [];
     setOrders(storedOrders);
   }, []);
 
   const handleClose = () => {
-    router.push("/inventoryadmin"); // Navigate to /inventoryadmin when clicked
+    router.push("/inventoryadmin");
   };
 
   return (
     <section className="bg-[#F9F9F6] min-h-screen px-6 py-12 relative">
-      {/* Close icon */}
       <FaTimes
         onClick={handleClose}
         className="absolute top-4 right-4 text-gray-500 cursor-pointer hover:text-gray-700"
@@ -35,45 +34,49 @@ export default function ViewAllOrders() {
           <p className="text-center text-lg text-gray-600">No orders found.</p>
         ) : (
           <div className="space-y-6">
-            {orders.map((order) => (
-              <div key={order.id} className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-[#3E4E50] mb-2">
-                  Order ID: {order.id}
-                </h3>
-                <p className="text-sm text-gray-600 mb-2">
-                  Date: {order.date || "N/A"}
-                </p>
-                <p className="text-sm text-gray-600 mb-2">
-                  Customer:{" "}
-                  {order.customer
-                    ? `${order.customer.fullName || "N/A"} (${order.customer.email || "N/A"})`
-                    : "N/A"}
-                </p>
-                <p className="text-sm text-gray-600 mb-4">
-                  Address:{" "}
-                  {order.customer
-                    ? `${order.customer.address || "N/A"}, ${order.customer.city || "N/A"}, ${order.customer.country || "N/A"}, ${order.customer.zip || "N/A"}`
-                    : "N/A"}
-                </p>
-                <h4 className="text-md font-semibold text-[#3E4E50] mb-2">
-                  Items:
-                </h4>
-                <ul className="list-disc list-inside text-sm text-gray-600 mb-4">
-                  {order.items && order.items.length > 0 ? (
-                    order.items.map((item, index) => (
-                      <li key={index}>
-                        {item.name || "Unnamed Item"} - £{item.price} x {item.quantity}
-                      </li>
-                    ))
-                  ) : (
-                    <li>No items found</li>
-                  )}
-                </ul>
-                <p className="text-md font-semibold text-[#A97C50]">
-                  Total: £{order.total ? order.total.toFixed(2) : "0.00"}
-                </p>
-              </div>
-            ))}
+            {orders.map((order) => {
+              const customer = order.customer || {};
+              const items = order.items || [];
+
+              return (
+                <div key={order.id} className="bg-white rounded-lg shadow p-6">
+                  <h3 className="text-lg font-semibold text-[#3E4E50] mb-2">
+                    Order ID: {order.id}
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-2">
+                    Date: {order.date || "N/A"}
+                  </p>
+                  <p className="text-sm text-gray-600 mb-2">
+                    Customer: {customer.fullName || "N/A"}
+                  </p>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Address: {customer.address || "N/A"}
+                  </p>
+
+                  <h4 className="text-md font-semibold text-[#3E4E50] mb-2">
+                    Items:
+                  </h4>
+                  <ul className="list-disc list-inside text-sm text-gray-600 mb-4">
+                    {items.length > 0 ? (
+                      items.map((item, index) => (
+                        <li key={index}>
+                          {item.name || "Unnamed Item"} - £{item.price} × {item.quantity}
+                        </li>
+                      ))
+                    ) : (
+                      <li>No items found</li>
+                    )}
+                  </ul>
+
+                  <p className="text-md font-semibold text-[#A97C50] mb-2">
+                    Total: £{order.total ? order.total.toFixed(2) : "0.00"}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Status: <span className="font-medium">{order.status || "Pending"}</span>
+                  </p>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

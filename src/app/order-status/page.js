@@ -1,20 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
-const ordersData = [
-  { id: "ORD001", customer: "Kwame Nkrumah", product: "Walnut Bed", status: "Processing" },
-  { id: "ORD002", customer: "Ama Serwaa", product: "Slate Sofa", status: "In Transit" },
-  { id: "ORD003", customer: "Kojo Mensah", product: "Caramel Mattress", status: "Delivered" },
-];
 
 const statuses = ["Processing", "In Transit", "Delivered", "Cancelled"];
 
 export default function UpdateOrderStatusPage() {
   const router = useRouter();
-  const [orders, setOrders] = useState(ordersData);
+  const [orders, setOrders] = useState([]);
   const [updatedStatus, setUpdatedStatus] = useState({});
+
+  useEffect(() => {
+    const storedOrders = JSON.parse(localStorage.getItem("orders")) || [];
+    setOrders(storedOrders);
+  }, []);
 
   const handleStatusChange = (index, newStatus) => {
     setUpdatedStatus((prev) => ({ ...prev, [index]: newStatus }));
@@ -25,6 +24,7 @@ export default function UpdateOrderStatusPage() {
     if (updatedStatus[index]) {
       updatedOrders[index].status = updatedStatus[index];
       setOrders(updatedOrders);
+      localStorage.setItem("orders", JSON.stringify(updatedOrders));
       setUpdatedStatus((prev) => {
         const copy = { ...prev };
         delete copy[index];
@@ -60,35 +60,47 @@ export default function UpdateOrderStatusPage() {
             </tr>
           </thead>
           <tbody className="text-[#3E4E50]">
-            {orders.map((order, index) => (
-              <tr key={order.id} className="border-b">
-                <td className="p-4">{order.id}</td>
-                <td className="p-4">{order.customer}</td>
-                <td className="p-4">{order.product}</td>
-                <td className="p-4 font-semibold">{order.status}</td>
-                <td className="p-4">
-                  <select
-                    value={updatedStatus[index] || order.status}
-                    onChange={(e) => handleStatusChange(index, e.target.value)}
-                    className="border border-gray-300 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-[#A97C50]"
-                  >
-                    {statuses.map((status, i) => (
-                      <option key={i} value={status}>
-                        {status}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td className="p-4">
-                  <button
-                    onClick={() => handleSave(index)}
-                    className="bg-[#6C4F3D] text-white px-4 py-2 rounded hover:bg-[#A97C50] transition"
-                  >
-                    Save
-                  </button>
+            {orders.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="p-4 text-center text-gray-500">
+                  No orders found.
                 </td>
               </tr>
-            ))}
+            ) : (
+              orders.map((order, index) => (
+                <tr key={order.id} className="border-b">
+                  <td className="p-4">{order.id}</td>
+                  <td className="p-4">
+                    {order.customer?.fullName || order.clientName || "Unknown"}
+                  </td>
+                  <td className="p-4">
+                    {order.items?.[0]?.name || order.product || "Unnamed Product"}
+                  </td>
+                  <td className="p-4 font-semibold">{order.status || "Pending"}</td>
+                  <td className="p-4">
+                    <select
+                      value={updatedStatus[index] || order.status || "Processing"}
+                      onChange={(e) => handleStatusChange(index, e.target.value)}
+                      className="border border-gray-300 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-[#A97C50]"
+                    >
+                      {statuses.map((status, i) => (
+                        <option key={i} value={status}>
+                          {status}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="p-4">
+                    <button
+                      onClick={() => handleSave(index)}
+                      className="bg-[#6C4F3D] text-white px-4 py-2 rounded hover:bg-[#A97C50] transition"
+                    >
+                      Save
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

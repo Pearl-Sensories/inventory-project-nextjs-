@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { FiTrash2 } from "react-icons/fi";
 
-export default function shoppingcart() {
+export default function ShoppingCart() {
   const [cart, setCart] = useState([]);
   const [showCheckoutForm, setShowCheckoutForm] = useState(false);
   const [formData, setFormData] = useState({ name: "", email: "", address: "" });
@@ -14,66 +14,63 @@ export default function shoppingcart() {
   useEffect(() => {
     const storedCart = JSON.parse(localStorage.getItem("cart")) || [];
     const initializedCart = storedCart.map((item) => ({
-      ...item,
-      price: parseFloat(item.price) || 0, // Ensure price is a valid number
-      quantity: parseInt(item.quantity) || 1, // Ensure quantity is a valid number
+      id: item.id,
+      name: item.name || item.title || "Unnamed Product",
+      image: item.image || "/placeholder.jpg",
+      price: parseFloat(item.price) || 0,
+      quantity: parseInt(item.quantity) || 1,
     }));
-    console.log("Loaded cart:", initializedCart); // Debugging
+    console.log("Loaded cart:", initializedCart);
     setCart(initializedCart);
   }, []);
 
   useEffect(() => {
-    console.log("Cart updated:", cart); // Debugging
+    console.log("Cart updated:", cart);
   }, [cart]);
 
+  const updateLocalStorage = (updatedCart) => {
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
+  };
+
   const handleQuantityChange = (id, quantity) => {
-    const parsedQuantity = parseInt(quantity) || 1; // Ensure quantity is a valid number
-    setCart((items) =>
-      items.map((item) =>
-        item.id === id ? { ...item, quantity: parsedQuantity } : item
-      )
+    const parsedQuantity = parseInt(quantity) || 1;
+    const updatedCart = cart.map((item) =>
+      item.id === id ? { ...item, quantity: parsedQuantity } : item
     );
-    localStorage.setItem(
-      "cart",
-      JSON.stringify(
-        cart.map((item) =>
-          item.id === id ? { ...item, quantity: parsedQuantity } : item
-        )
-      )
-    );
+    setCart(updatedCart);
+    updateLocalStorage(updatedCart);
   };
 
   const handleRemoveItem = (id) => {
     const updatedCart = cart.filter((item) => item.id !== id);
     setCart(updatedCart);
-    localStorage.setItem("cart", JSON.stringify(updatedCart));
+    updateLocalStorage(updatedCart);
   };
 
   const handleAddToCart = (product) => {
-    console.log("Adding product to cart:", product); // Debugging
-    setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === product.id);
-      if (existingItem) {
-        const updatedCart = prevCart.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-        localStorage.setItem("cart", JSON.stringify(updatedCart));
-        return updatedCart;
-      } else {
-        const updatedCart = [
-          ...prevCart,
-          {
-            ...product,
-            price: parseFloat(product.price) || 0, // Ensure price is a valid number
-            quantity: 1,
-          },
-        ];
-        localStorage.setItem("cart", JSON.stringify(updatedCart));
-        return updatedCart;
-      }
-    });
+    const normalizedProduct = {
+      id: product.id,
+      name: product.name || product.title || "Unnamed Product",
+      image: product.image || "/placeholder.jpg",
+      price: parseFloat(product.price) || 0,
+      quantity: 1,
+    };
+
+    const existingItem = cart.find((item) => item.id === normalizedProduct.id);
+    let updatedCart;
+
+    if (existingItem) {
+      updatedCart = cart.map((item) =>
+        item.id === normalizedProduct.id
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      );
+    } else {
+      updatedCart = [...cart, normalizedProduct];
+    }
+
+    setCart(updatedCart);
+    updateLocalStorage(updatedCart);
   };
 
   const handleCheckout = () => {
@@ -82,21 +79,15 @@ export default function shoppingcart() {
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
-
-    // Clear the cart
     setCart([]);
     localStorage.removeItem("cart");
-
-    // Optionally, display a success message
     alert("Checkout successful! Your cart is now empty.");
-
-    // Reset the form and hide the checkout form
     setFormData({ name: "", email: "", address: "" });
     setShowCheckoutForm(false);
   };
 
   const total = cart.reduce(
-    (acc, item) => acc + (parseFloat(item.price) || 0) * (parseInt(item.quantity) || 1),
+    (acc, item) => acc + item.price * item.quantity,
     0
   );
 
@@ -111,12 +102,12 @@ export default function shoppingcart() {
         <div className="lg:col-span-2 space-y-6">
           {cart.map((item, index) => (
             <div
-              key={`${item.id}-${index}`} // Ensure the key is unique
+              key={`${item.id}-${index}`}
               className="flex items-center bg-white rounded-lg shadow p-4"
             >
               <Image
                 src={item.image}
-                alt={item.name || "Product image"}
+                alt={item.name}
                 width={100}
                 height={100}
                 className="rounded-md object-cover"
@@ -125,13 +116,15 @@ export default function shoppingcart() {
                 <h2 className="text-lg font-medium text-[#3E4E50]">
                   {item.name}
                 </h2>
-                <p className="text-[#A97C50] font-semibold">£{item.price}</p>
+                <p className="text-[#A97C50] font-semibold">
+                  £{item.price.toFixed(2)}
+                </p>
                 <div className="mt-2 flex items-center space-x-2">
                   <label className="text-sm">Qty:</label>
                   <input
                     type="number"
                     min="1"
-                    value={item.quantity || 1}
+                    value={item.quantity}
                     onChange={(e) =>
                       handleQuantityChange(item.id, e.target.value)
                     }
@@ -141,7 +134,7 @@ export default function shoppingcart() {
               </div>
               <div className="text-right">
                 <p className="text-sm text-gray-600">
-                  Subtotal: £{((parseFloat(item.price) || 0) * (parseInt(item.quantity) || 1)).toFixed(2)}
+                  Subtotal: £{(item.price * item.quantity).toFixed(2)}
                 </p>
                 <button
                   onClick={() => handleRemoveItem(item.id)}
@@ -161,7 +154,7 @@ export default function shoppingcart() {
           </h3>
           <div className="flex justify-between mb-2">
             <span>Total Items:</span>
-            <span>{cart.length}</span>
+            <span>{cart.reduce((acc, item) => acc + item.quantity, 0)}</span>
           </div>
           <div className="flex justify-between mb-4">
             <span>Total Price:</span>
